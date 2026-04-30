@@ -49,14 +49,15 @@ public class AccesoTrabajador {
             insertado = sentencia.executeUpdate();
 
         }catch (SQLException e){
-            throw new BDException(BDException.ERROR_QUERY + e.getMessage());
+            actualizarTrabajador(trabajador);
+        }catch (BDException e){
+            throw new BDException(BDException.ERROR_ABRIR_CONEXION + e.getMessage());
         }
         finally {
             if(conexion != null){
                 ConfigMySQL.cerrarConexion(conexion);
             }
         }
-
         return insertado > 0;
     }
 
