@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class AccesoTrabajador {
+public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR YA QUE ES AUTOINCREMENTAL
 
     /**
      * Metodo para insertar un trabajador en la base de datos
