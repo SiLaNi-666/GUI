@@ -128,5 +128,6 @@ public class AccesoTrabajador {
         }
         return filasActualizadas > 0;
     }
+    //Hacer metodo para ir linea por linea del ArrayList e insertar esas lineas
 
 }
