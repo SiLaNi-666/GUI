@@ -65,6 +65,12 @@ public class ListarDialog extends JDialog implements ActionListener {
 		setVisible(true);
 	}
 
+	/**
+	 * Metodo para rellenar la tabla de trabajadores para su uso en Eliminar Trabajador
+	 * *Falta terminar el metodo e implementarlo en BajaDialog*
+	 * @param e the event to be processed
+	 */
+	/*
 	public void rellenarTabla(){
 		modelo.setRowCount(0); //Limpiar la tabla
 		ArrayList<Trabajador> listaTrabajadores = AccesoTrabajador.consultarTrabajadores();
@@ -83,7 +89,7 @@ public class ListarDialog extends JDialog implements ActionListener {
 			modelo.addRow(fila);
 		}
 	}
-
+	*/
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
