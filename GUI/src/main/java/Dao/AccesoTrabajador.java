@@ -27,8 +27,8 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
         try{
 
             conexion = ConfigMySQL.abrirConexion();
-            String insercion = "INSERT INTO Trabajador (identificador, dni, nombre, apellidos, direccion, telefono, puesto) " +
-                    "VALUES (?,?,?,?,?,?,?);";
+            String insercion = "INSERT INTO Trabajador (dni, nombre, apellidos, direccion, telefono, puesto) " +
+                    "VALUES (?,?,?,?,?,?);";
             PreparedStatement sentencia = conexion.prepareStatement(insercion);
             int identificador = trabajador.getIdentificador();
             String dni = trabajador.getDni();
@@ -38,13 +38,12 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
             String telefono = trabajador.getTelefono();
             String puesto = trabajador.getPuesto();
 
-            sentencia.setInt(1, identificador);
-            sentencia.setString(2, dni);
-            sentencia.setString(3, nombre);
-            sentencia.setString(4, apellidos);
-            sentencia.setString(5, direccion);
-            sentencia.setString(6, telefono);
-            sentencia.setString(7, puesto);
+            sentencia.setString(1, dni);
+            sentencia.setString(2, nombre);
+            sentencia.setString(3, apellidos);
+            sentencia.setString(4, direccion);
+            sentencia.setString(5, telefono);
+            sentencia.setString(6, puesto);
 
             insertado = sentencia.executeUpdate();
 
@@ -128,6 +127,42 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
         }
         return filasActualizadas > 0;
     }
+
+    public static List<Trabajador> consultarTrabajadores() throws BDException{
+        Connection conexion = null;
+        List<Trabajador> listaTrabajadores = new ArrayList<>();
+
+        try{
+            conexion = ConfigMySQL.abrirConexion();
+            String consulta = "SELECT * FROM Trabajador";
+            PreparedStatement sentencia = conexion.prepareStatement(consulta);
+            ResultSet rs = sentencia.executeQuery();
+
+            while (rs.next()){
+                int identificador = rs.getInt("Identificador");
+                String dni = rs.getString("DNI");
+                String nombre = rs.getString("Nombre");
+                String apellidos = rs.getString("Apellidos");
+                String direccion = rs.getString("Direccion");
+                String telefono = rs.getString("Telefono");
+                String puesto = rs.getString("Puesto");
+
+                Trabajador trabajador = new Trabajador(identificador, dni, nombre, apellidos, direccion, telefono, puesto);
+                listaTrabajadores.add(trabajador);
+            }
+        }catch (SQLException e){
+            throw new BDException(BDException.ERROR_QUERY + e.getMessage());
+        }
+        finally {
+            if (conexion != null) {
+                ConfigMySQL.cerrarConexion(conexion);
+            }
+        }
+
+                return listaTrabajadores;
+    }
+
     //Hacer metodo para ir linea por linea del ArrayList e insertar esas lineas
+
 
 }
