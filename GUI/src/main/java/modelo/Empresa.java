@@ -3,6 +3,9 @@
  */
 package modelo;
 
+import Dao.AccesoTrabajador;
+import Excepciones.BDException;
+
 import java.util.ArrayList;
 
 /**
@@ -12,23 +15,39 @@ import java.util.ArrayList;
 public class Empresa {
 	
 	ArrayList <Trabajador> trabajadores;
-	
+	private int proximoId;
 
 	/**
 	 * @param trabajadores
 	 */
 	public Empresa(ArrayList<Trabajador> trabajadores) {
 		this.trabajadores = trabajadores;
+		// Calcular el próximo ID (máximo actual + 1)
+		this.proximoId = calcularProximoId();
 	}
 	
 	/**
-	 * Comprueba si un trabajador est� en la lista
+	 * Calcula el próximo ID disponible
+	 * @return
+	 */
+	private int calcularProximoId() {
+		int maxId = 0;
+		for (Trabajador t : trabajadores) {
+			if (t.getIdentificador() > maxId) {
+				maxId = t.getIdentificador();
+			}
+		}
+		return maxId + 1;
+	}
+	
+	/**
+	 * Comprueba si un trabajador est� en la lista por DNI
 	 * @param t
 	 * @return
 	 */
 	public boolean esta(Trabajador t){
 		for(int i=0; i<trabajadores.size(); i++){
-			if(trabajadores.get(i).getIdentificador() == t.getIdentificador()){
+			if(trabajadores.get(i).getDni().equalsIgnoreCase(t.getDni())){
 				return true;
 			}
 		}
@@ -51,15 +70,23 @@ public class Empresa {
 	}
 	
 	/**
-	 * Si el trabajador no est� en la lista, lo a�ade
+	 * Si el trabajador no est� en la lista, lo a�ade con ID autoincremental
 	 * @param t
 	 */
-	public boolean altaTrabajador(Trabajador t){
-		if(!esta(t)){
-			trabajadores.add(t);
-			return true;
+	public boolean altaTrabajador(Trabajador t) throws BDException { // Añade el throws
+		if(!esta(t)) {
+			// 1. Intentamos guardar en la Base de Datos primero
+			boolean insertadoBD = AccesoTrabajador.insertarTrabajador(t);
+
+			if (insertadoBD) {
+				// 2. Si la BD lo acepta, lo guardamos en la lista local
+				t.setIdentificador(proximoId); // Opcional si usas autoincremental real
+				proximoId++;
+				trabajadores.add(t);
+				return true;
+			}
 		}
-		else return false;
+		return false;
 	}
 	/**
 	 * Da de baja un trabajador busc�ndolo por c�digo
