@@ -13,21 +13,19 @@ import javax.swing.JFrame;
 import dialogs.AltaDialog;
 import dialogs.BajaDialog;
 import dialogs.ListarDialog;
-import dialogs.ModificaDialog;
-import dialogs.VerDialog;
 import ficheros.FicheroDatos;
 import modelo.Empresa;
 import modelo.Trabajador;
 
 /**
- * 
+ *
  * @author usuario
  *
  */
 public class EmpresaGUI extends JFrame implements ActionListener {
 
 	Empresa empresa;
-	
+
 	JButton altaTrabajador;
 	JButton bajaTrabajador;
 	JButton modificaTrabajador;
