@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dialogs;
 
@@ -18,11 +18,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import Excepciones.BDException;
 import modelo.Empresa;
 import modelo.Trabajador;
 
 /**
- * 
+ *
  * @author usuario
  *
  */
@@ -178,27 +179,27 @@ public class AltaDialog extends JDialog implements ActionListener, ItemListener 
 	public void actionPerformed(ActionEvent e) {
 		// TODO Auto-generated method stub
 		if (e.getSource() == aceptar) {
-			try {
-
-				//id = Integer.parseInt(areaIdentificador.getText()); BORRADO POR AUTOINCREMENTAL
-				dni = areaDni.getText();
-				nombre = areaNombre.getText();
-				apellidos = areaApellidos.getText();
-				direccion = areaDireccion.getText();
-				telefono = areaTelefono.getText();
-				if (comprobarErrores()) {
+			dni = areaDni.getText();
+			nombre = areaNombre.getText();
+			apellidos = areaApellidos.getText();
+			direccion = areaDireccion.getText();
+			telefono = areaTelefono.getText();
+			// En actionPerformed, dentro del if(e.getSource() == aceptar)
+			if (comprobarErrores()) {
+				try {
 					Trabajador t = new Trabajador(0, dni, nombre, apellidos, direccion, telefono, puesto);
 					if (empresa.altaTrabajador(t)) {
-						JOptionPane.showMessageDialog(null, "Datos introducidos correctamente");
-					} else {
-						JOptionPane.showMessageDialog(null, "El ID del trabajador que quiere introducir ya existe",
-								"Error", JOptionPane.ERROR_MESSAGE);
-					}
-				}
+						// OPCIONAL: Guardar en el .dat aquí mismo para seguridad total
+						ficheros.FicheroDatos.escribirTrabajadores("ficheroDatos\\empresa.dat", empresa.getTrabajadores());
 
-			} catch (Exception e1) {
-				JOptionPane.showMessageDialog(null, "El ID debe ser un n�mero entero", "Error",
-						JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(null, "Datos introducidos correctamente en BD y Fichero");
+						dispose();
+					} else {
+						JOptionPane.showMessageDialog(null, "El trabajador ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (BDException ex) {
+					JOptionPane.showMessageDialog(null, "Error al conectar con la BD: " + ex.getMessage(), "Error SQL", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 
 		} else if (e.getSource() == cancelar) {
@@ -210,7 +211,7 @@ public class AltaDialog extends JDialog implements ActionListener, ItemListener 
 	/**
 	 * M�todo que comprueba si no hay ning�n campo vac�o o si la longitud de los
 	 * campos es la correcta
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean comprobarErrores() {
@@ -246,8 +247,8 @@ public class AltaDialog extends JDialog implements ActionListener, ItemListener 
 			JOptionPane.showMessageDialog(null, "El tel�fono debe tener longitud 9", "Error",
 					JOptionPane.ERROR_MESSAGE);
 			return false;
-		} else if (puesto.equals("")) {
-			JOptionPane.showMessageDialog(null, "Debe introducir el puesto del trabajador", "Error",
+		} else if (puesto.equals("") || puesto.equals("Elija Puesto")) {
+			JOptionPane.showMessageDialog(null, "Debe introducir el puesto del trabajador. CAMPO OBLIGATORIO", "Error",
 					JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
