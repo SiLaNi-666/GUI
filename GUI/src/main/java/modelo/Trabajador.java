@@ -8,7 +8,7 @@ package modelo;
  *
  */
 public class Trabajador {
-	
+
 	private int identificador;
 	private String dni;
 	private String nombre;
