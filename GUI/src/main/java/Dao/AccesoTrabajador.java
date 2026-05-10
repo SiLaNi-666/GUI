@@ -159,7 +159,21 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
             }
         }
 
-                return listaTrabajadores;
+        return listaTrabajadores;
+    }
+
+    /**
+     * Metodo para volcar los datos de un fichero a la base de datos
+     * @param lista
+     */
+    public static void volcarFicheroABBDD(List<Trabajador> lista) {
+        for (Trabajador t : lista) {
+            try {
+                insertarTrabajador(t);
+            } catch (BDException e) {
+                System.out.println("El trabajador " + t.getDni() + " ya estaba en la BD o hubo un error.");
+            }
+        }
     }
 
     //Hacer metodo para ir linea por linea del ArrayList e insertar esas lineas
