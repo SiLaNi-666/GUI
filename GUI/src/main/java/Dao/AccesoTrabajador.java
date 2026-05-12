@@ -176,6 +176,42 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
         }
     }
 
+    /**
+     * Para buscar un trabajador por su DNI o por su Identificador en el ListarDialog.
+     * @param criterio
+     * @return
+     * @throws BDException
+     */
+    public static Trabajador buscarTrabajador(String criterio) throws BDException {
+        Connection conexion = null;
+        try {
+            conexion = ConfigMySQL.abrirConexion();
+            // Buscamos si el criterio coincide con el DNI O con el Identificador
+            String sql = "SELECT * FROM Trabajador WHERE DNI = ? OR Identificador = ?";
+            PreparedStatement sentencia = conexion.prepareStatement(sql);
+            sentencia.setString(1, criterio);
+            sentencia.setString(2, criterio);
+
+            ResultSet rs = sentencia.executeQuery();
+            if (rs.next()) {
+                return new Trabajador(
+                        rs.getInt("Identificador"),
+                        rs.getString("DNI"),
+                        rs.getString("Nombre"),
+                        rs.getString("Apellidos"),
+                        rs.getString("Direccion"),
+                        rs.getString("Telefono"),
+                        rs.getString("Puesto")
+                );
+            }
+            return null; // Si no lo encuentra
+        } catch (SQLException e) {
+            throw new BDException("Error al buscar: " + e.getMessage());
+        } finally {
+            ConfigMySQL.cerrarConexion(conexion);
+        }
+    }
+
     //Hacer metodo para ir linea por linea del ArrayList e insertar esas lineas
 
 
