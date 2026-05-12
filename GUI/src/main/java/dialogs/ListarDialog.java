@@ -3,8 +3,7 @@
  */
 package dialogs;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
@@ -32,62 +31,62 @@ public class ListarDialog extends JDialog implements ActionListener {
 	JButton cerrar;
 	DefaultTableModel modelo;
 	JButton modificar;
+	JButton buscar;
+	JTextField campoBusqueda;
 
 	public ListarDialog(Empresa empresa) {
 		this.empresa = empresa;
 
 		setResizable(false);
-		// t�tulo del di�log
 		setTitle("Listado Trabajadores");
-		// tama�o
-		setSize(750, 700);
-		setLayout(new FlowLayout());
-		// colocaci�n en el centro de la pantalla
+		setSize(750, 750); // Un poco más de alto para que quepa el buscador
+
+		// 1. CAMBIO CLAVE: Usamos BorderLayout para organizar por zonas (Norte, Centro, Sur)
+		setLayout(new BorderLayout());
 		setLocationRelativeTo(null);
 
-		// Crea un JTable, cada fila será un trabajador
-		// 1. Mantenemos las columnas
-		String[] columnas = { "Identificador", "DNI", "Nombre", "Apellidos", "Dirección", "Teléfono", "Puesto" };
+		// --- ZONA NORTE: EL BUSCADOR ---
+		JPanel panelBusqueda = new JPanel(new FlowLayout());
+		panelBusqueda.add(new JLabel("DNI/ID:"));
+		campoBusqueda = new JTextField(15); // La cajita para escribir
+		panelBusqueda.add(campoBusqueda);
+		buscar = new JButton("Buscar");
+		buscar.addActionListener(this);
+		panelBusqueda.add(buscar);
 
-		// 2. Creamos el modelo VACÍO (null)
+		add(panelBusqueda, BorderLayout.NORTH); // Añadir arriba
+
+		// --- ZONA CENTRAL: LA TABLA ---
+		String[] columnas = { "Identificador", "DNI", "Nombre", "Apellidos", "Dirección", "Teléfono", "Puesto" };
 		modelo = new DefaultTableModel(null, columnas);
 		tabla = new JTable(modelo);
 
-		// 3. ¡AQUÍ EL CAMBIO! Llamamos a la BBDD y rellenamos fila a fila
+		// Rellenamos la tabla (usando tu lógica de BBDD)
 		try {
-			// Pedimos la lista al DAO
 			ArrayList<Trabajador> lista = (ArrayList<Trabajador>) AccesoTrabajador.consultarTrabajadores();
-
-			// Recorremos la lista y añadimos al modelo
 			for (Trabajador t : lista) {
-				Object[] fila = {
-						t.getIdentificador(),
-						t.getDni(),
-						t.getNombre(),
-						t.getApellidos(),
-						t.getDireccion(),
-						t.getTelefono(),
-						t.getPuesto()
-				};
-				modelo.addRow(fila); // Esta línea añade el trabajador a la tabla visual
+				Object[] fila = { t.getIdentificador(), t.getDni(), t.getNombre(), t.getApellidos(), t.getDireccion(), t.getTelefono(), t.getPuesto() };
+				modelo.addRow(fila);
 			}
 		} catch (BDException e) {
-			JOptionPane.showMessageDialog(this, "Error al leer la base de datos: " + e.getMessage(),
-					"Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Error al leer la base de datos", "Error", JOptionPane.ERROR_MESSAGE);
 		}
-		//                              recargarTabla();
-		// Mete la tabla en un JCrollPane
-		JScrollPane jsp = new JScrollPane(tabla);
-		jsp.setPreferredSize(new Dimension(700, 600));
-		add(jsp);
 
-		//BOTON DE CERRAR Y MODIFICAR
-		cerrar = new JButton("Cerrar");
-		cerrar.addActionListener(this);
-		add(cerrar);
+		JScrollPane jsp = new JScrollPane(tabla);
+		add(jsp, BorderLayout.CENTER); // La tabla se expande en el centro
+
+		// --- ZONA SUR: LOS BOTONES DE ACCIÓN ---
+		JPanel panelInferior = new JPanel(new FlowLayout());
+
 		modificar = new JButton("Modificar");
 		modificar.addActionListener(this);
-		add(modificar); // Ponlo al lado del botón cerrar
+		panelInferior.add(modificar);
+
+		cerrar = new JButton("Cerrar");
+		cerrar.addActionListener(this);
+		panelInferior.add(cerrar);
+
+		add(panelInferior, BorderLayout.SOUTH); // Los botones se quedan abajo
 
 		setVisible(true);
 	}
@@ -145,6 +144,27 @@ public class ListarDialog extends JDialog implements ActionListener {
 
 				// Abrimos el nuevo diálogo de modificación pasándole el trabajador y el 'this' (esta ventana)
 				new ModificarDialog(empresa, aux, this);
+			}
+		}
+
+		if (e.getSource() == buscar) {
+			String texto = campoBusqueda.getText();
+			if (texto.isEmpty()) {
+				rellenarTabla(); // Si el campo está vacío, mostramos todos otra vez
+			} else {
+				try {
+					Trabajador t = AccesoTrabajador.buscarTrabajador(texto);
+					if (t != null) {
+						modelo.setRowCount(0); // Borramos la tabla actual
+						Object[] fila = { t.getIdentificador(), t.getDni(), t.getNombre(),
+								t.getApellidos(), t.getDireccion(), t.getTelefono(), t.getPuesto() };
+						modelo.addRow(fila); // Añadimos solo al encontrado
+					} else {
+						JOptionPane.showMessageDialog(this, "No se ha encontrado ningún trabajador con ese ID/DNI");
+					}
+				} catch (BDException ex) {
+					JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+				}
 			}
 		}
 	}
