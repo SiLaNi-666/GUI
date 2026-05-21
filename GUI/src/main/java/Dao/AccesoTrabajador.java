@@ -4,6 +4,9 @@ import BD.ConfigMySQL;
 import Excepciones.BDException;
 import modelo.Trabajador;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -169,9 +172,13 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
     public static void volcarFicheroABBDD(List<Trabajador> lista) {
         for (Trabajador t : lista) {
             try {
-                insertarTrabajador(t);
+                // Buscamos si ya está para no duplicar por error
+                if (buscarTrabajador(t.getDni()) == null) {
+                    insertarTrabajador(t);
+                    System.out.println("Trabajador " + t.getDni() + " volcado con éxito.");
+                }
             } catch (BDException e) {
-                System.out.println("El trabajador " + t.getDni() + " ya estaba en la BD o hubo un error.");
+                System.out.println("No se pudo volcar el DNI " + t.getDni() + ": " + e.getMessage());
             }
         }
     }
@@ -184,17 +191,21 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
      */
     public static Trabajador buscarTrabajador(String criterio) throws BDException {
         Connection conexion = null;
+        Trabajador t = null;
+
         try {
             conexion = ConfigMySQL.abrirConexion();
-            // Buscamos si el criterio coincide con el DNI O con el Identificador
-            String sql = "SELECT * FROM Trabajador WHERE DNI = ? OR Identificador = ?";
+            // Buscamos si coincide con el DNI o con el Identificador exacto
+            String sql = "SELECT * FROM Trabajador WHERE dni = ? OR identificador = ?";
             PreparedStatement sentencia = conexion.prepareStatement(sql);
             sentencia.setString(1, criterio);
             sentencia.setString(2, criterio);
 
             ResultSet rs = sentencia.executeQuery();
+
             if (rs.next()) {
-                return new Trabajador(
+                // Si lo encuentra, creamos el objeto con sus datos reales de la BD
+                t = new Trabajador(
                         rs.getInt("Identificador"),
                         rs.getString("DNI"),
                         rs.getString("Nombre"),
@@ -204,15 +215,97 @@ public class AccesoTrabajador {   //QUITAR EL IDENTIFICADOR EN LAS CONSULTAS YA 
                         rs.getString("Puesto")
                 );
             }
-            return null; // Si no lo encuentra
         } catch (SQLException e) {
-            throw new BDException("Error al buscar: " + e.getMessage());
+            throw new BDException("Error en la búsqueda de la base de datos: " + e.getMessage());
+        } finally {
+            if (conexion != null) {
+                ConfigMySQL.cerrarConexion(conexion);
+            }
+        }
+        return t; // Devuelve el trabajador encontrado, o null si no existe
+    }
+
+    public static void exportarACSV(String rutaArchivo) throws BDException {
+        Connection conexion = null;
+        try {
+            conexion = ConfigMySQL.abrirConexion();
+            String sql = "SELECT * FROM Trabajador";
+            PreparedStatement sentencia = conexion.prepareStatement(sql);
+            ResultSet rs = sentencia.executeQuery();
+
+            // Usamos BufferedWriter para escribir el archivo de texto
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(rutaArchivo))) {
+                // 1. Escribimos la cabecera del CSV separados por comas (o punto y coma)
+                bw.write("Identificador,DNI,Nombre,Apellidos,Direccion,Telefono,Puesto");
+                bw.newLine();
+
+                // 2. Recorremos los trabajadores y los escribimos fila a fila
+                while (rs.next()) {
+                    String fila = rs.getInt("Identificador") + ","
+                            + rs.getString("DNI") + ","
+                            + rs.getString("Nombre") + ","
+                            + rs.getString("Apellidos") + ","
+                            + rs.getString("Direccion") + ","
+                            + rs.getString("Telefono") + ","
+                            + rs.getString("Puesto");
+                    bw.write(fila);
+                    bw.newLine();
+                }
+            } catch (IOException e) {
+                throw new BDException("Error al escribir el archivo CSV: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            throw new BDException("Error de base de datos al exportar CSV: " + e.getMessage());
         } finally {
             ConfigMySQL.cerrarConexion(conexion);
         }
     }
 
-    //Hacer metodo para ir linea por linea del ArrayList e insertar esas lineas
+    public static void exportarAJSON(String rutaArchivo) throws BDException {
+        Connection conexion = null;
+        try {
+            conexion = ConfigMySQL.abrirConexion();
+            String sql = "SELECT * FROM Trabajador";
+            PreparedStatement sentencia = conexion.prepareStatement(sql);
+            ResultSet rs = sentencia.executeQuery();
 
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(rutaArchivo))) {
+                bw.write("["); // Inicio del array JSON
+                bw.newLine();
+
+                boolean esPrimero = true;
+
+                while (rs.next()) {
+                    if (!esPrimero) {
+                        bw.write(","); // Separador entre objetos JSON
+                        bw.newLine();
+                    }
+                    esPrimero = false;
+
+                    // Construimos el formato JSON manualmente {"clave": "valor"}
+                    String jsonObjeto = "  {\n"
+                            + "    \"identificador\": " + rs.getInt("Identificador") + ",\n"
+                            + "    \"dni\": \"" + rs.getString("DNI") + "\",\n"
+                            + "    \"nombre\": \"" + rs.getString("Nombre") + "\",\n"
+                            + "    \"apellidos\": \"" + rs.getString("Apellidos") + "\",\n"
+                            + "    \"direccion\": \"" + rs.getString("Direccion") + "\",\n"
+                            + "    \"telefono\": \"" + rs.getString("Telefono") + "\",\n"
+                            + "    \"puesto\": \"" + rs.getString("Puesto") + "\"\n"
+                            + "  }";
+
+                    bw.write(jsonObjeto);
+                }
+
+                bw.newLine();
+                bw.write("]"); // Fin del array JSON
+            } catch (IOException e) {
+                throw new BDException("Error al escribir el archivo JSON: " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            throw new BDException("Error de base de datos al exportar JSON: " + e.getMessage());
+        } finally {
+            ConfigMySQL.cerrarConexion(conexion);
+        }
+    }
 
 }
