@@ -184,12 +184,10 @@ public class AltaDialog extends JDialog implements ActionListener, ItemListener 
 			apellidos = areaApellidos.getText();
 			direccion = areaDireccion.getText();
 			telefono = areaTelefono.getText();
-			// En actionPerformed, dentro del if(e.getSource() == aceptar)
 			if (comprobarErrores()) {
 				try {
 					Trabajador t = new Trabajador(0, dni, nombre, apellidos, direccion, telefono, puesto);
 					if (empresa.altaTrabajador(t)) {
-						// OPCIONAL: Guardar en el .dat aquí mismo para seguridad total
 						ficheros.FicheroDatos.escribirTrabajadores("ficheroDatos\\empresa.dat", empresa.getTrabajadores());
 
 						JOptionPane.showMessageDialog(null, "Datos introducidos correctamente en BD y Fichero");
