@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import dialogs.AltaDialog;
 import dialogs.BajaDialog;
 import dialogs.ListarDialog;
+import dialogs.ModificarDialog;
 import ficheros.FicheroDatos;
 import modelo.Empresa;
 import modelo.Trabajador;
@@ -39,6 +40,8 @@ public class EmpresaGUI extends JFrame implements ActionListener {
 		// Carga los trabajadores leidos de un fichero a memoria
 		ArrayList<Trabajador> trabaj = FicheroDatos.obtenerTrabajadores("ficheroDatos\\empresa.dat");
 		empresa = new Empresa(trabaj);
+		// Justo después de crear la empresa, inyectamos los datos del fichero en MySQL
+		Dao.AccesoTrabajador.volcarFicheroABBDD(trabaj);
 
 		// Tamaño JFrame
 		setSize(800, 750);
@@ -92,9 +95,9 @@ public class EmpresaGUI extends JFrame implements ActionListener {
 		} else if (e.getSource() == bajaTrabajador) {
 			new BajaDialog(empresa);
 		} else if (e.getSource() == modificaTrabajador) {
-			//new ModificaDialog(empresa);
+			new ModificarDialog(this, empresa);
 		} else if (e.getSource() == buscaTrabajador) {
-			//new VerDialog(empresa);
+			new ListarDialog(empresa);
 		} else if (e.getSource() == listarTrabajadores) {
 			new ListarDialog(empresa);
 		}
