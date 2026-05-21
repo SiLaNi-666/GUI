@@ -30,9 +30,13 @@ public class ListarDialog extends JDialog implements ActionListener {
 	JTable tabla;
 	JButton cerrar;
 	DefaultTableModel modelo;
-	JButton modificar;
-	JButton buscar;
 	JTextField campoBusqueda;
+	JButton buscar;
+	JButton modificar;
+	JButton btnExportarCSV;
+	JButton btnExportarJSON;
+
+
 
 	public ListarDialog(Empresa empresa) {
 		this.empresa = empresa;
@@ -86,6 +90,15 @@ public class ListarDialog extends JDialog implements ActionListener {
 		cerrar.addActionListener(this);
 		panelInferior.add(cerrar);
 
+		// Busca donde creas los botones modificar y cerrar, y añade esto:
+		btnExportarCSV = new JButton("Exportar CSV");
+		btnExportarCSV.addActionListener(this); // El cable para que funcione
+		panelInferior.add(btnExportarCSV);
+
+		btnExportarJSON = new JButton("Exportar JSON");
+		btnExportarJSON.addActionListener(this); // El cable para que funcione
+		panelInferior.add(btnExportarJSON);
+
 		add(panelInferior, BorderLayout.SOUTH); // Los botones se quedan abajo
 
 		setVisible(true);
@@ -96,12 +109,10 @@ public class ListarDialog extends JDialog implements ActionListener {
 	 * *Falta terminar el metodo e implementarlo en BajaDialog*
      */
 	public void rellenarTabla() {
-		modelo.setRowCount(0); // Esto limpia la tabla antes de cargarla
+		modelo.setRowCount(0); // Borra la tabla vieja
 		try {
-			// Usamos List para que no haya problemas de casteo
-			java.util.List<Trabajador> listaTrabajadores = AccesoTrabajador.consultarTrabajadores();
-
-			for (Trabajador t : listaTrabajadores) {
+			ArrayList<Trabajador> lista = (ArrayList<Trabajador>) AccesoTrabajador.consultarTrabajadores();
+			for (Trabajador t : lista) {
 				Object[] fila = {
 						t.getIdentificador(),
 						t.getDni(),
@@ -111,10 +122,10 @@ public class ListarDialog extends JDialog implements ActionListener {
 						t.getTelefono(),
 						t.getPuesto()
 				};
-				modelo.addRow(fila);
+				modelo.addRow(fila); // Dibuja todos los trabajadores reales de la BD
 			}
 		} catch (BDException e) {
-			JOptionPane.showMessageDialog(this, "Error al cargar: " + e.getMessage());
+			JOptionPane.showMessageDialog(this, "Error al recargar: " + e.getMessage());
 		}
 	}
 
@@ -128,23 +139,24 @@ public class ListarDialog extends JDialog implements ActionListener {
 		if (e.getSource() == modificar) {
 			int fila = tabla.getSelectedRow();
 			if (fila == -1) {
-				JOptionPane.showMessageDialog(this, "Por favor, selecciona un trabajador de la tabla");
+				JOptionPane.showMessageDialog(this, "Por favor, selecciona un trabajador de la tabla para modificar.");
 			} else {
-				// Extraemos los datos de la fila (columna a columna)
+				// Obtenemos los valores de la fila que el usuario ha pinchado
 				int id = (int) modelo.getValueAt(fila, 0);
-				String dni = (String) modelo.getValueAt(fila, 1);
-				String nom = (String) modelo.getValueAt(fila, 2);
-				String ape = (String) modelo.getValueAt(fila, 3);
-				String dir = (String) modelo.getValueAt(fila, 4);
-				String tel = (String) modelo.getValueAt(fila, 5);
-				String pue = (String) modelo.getValueAt(fila, 6);
+				String dni = (String) modelo.getValueAt(fila, 1).toString();
+				String nom = (String) modelo.getValueAt(fila, 2).toString();
+				String ape = (String) modelo.getValueAt(fila, 3).toString();
+				String dir = (String) modelo.getValueAt(fila, 4).toString();
+				String tel = (String) modelo.getValueAt(fila, 5).toString();
+				String pue = (String) modelo.getValueAt(fila, 6).toString();
 
-				// Creamos un objeto con esos datos
+				// Construimos el objeto temporal
 				Trabajador aux = new Trabajador(id, dni, nom, ape, dir, tel, pue);
 
-				// Abrimos el nuevo diálogo de modificación pasándole el trabajador y el 'this' (esta ventana)
-				new ModificarDialog(empresa, aux, this);
-			}
+				// Abrimos la ventana que acabamos de crear pasándole los datos
+// Busca donde tenías: new ModificarDialog(empresa, aux, this);
+// Y cámbialo por esto:
+				new ModificarDialog((JFrame) SwingUtilities.getWindowAncestor(this), empresa);			}
 		}
 
 		if (e.getSource() == buscar) {
@@ -156,14 +168,88 @@ public class ListarDialog extends JDialog implements ActionListener {
 					Trabajador t = AccesoTrabajador.buscarTrabajador(texto);
 					if (t != null) {
 						modelo.setRowCount(0); // Borramos la tabla actual
-						Object[] fila = { t.getIdentificador(), t.getDni(), t.getNombre(),
-								t.getApellidos(), t.getDireccion(), t.getTelefono(), t.getPuesto() };
+						Object[] fila = {
+								t.getIdentificador(),
+								t.getDni(),
+								t.getNombre(),
+								t.getApellidos(),
+								t.getDireccion(),
+								t.getTelefono(),
+								t.getPuesto()
+						};
 						modelo.addRow(fila); // Añadimos solo al encontrado
 					} else {
 						JOptionPane.showMessageDialog(this, "No se ha encontrado ningún trabajador con ese ID/DNI");
 					}
 				} catch (BDException ex) {
 					JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+				}
+			}
+		}
+
+		if (e.getSource() == btnExportarCSV) {
+			JFileChooser selectorArchivo = new JFileChooser();
+			selectorArchivo.setDialogTitle("Guardar archivo CSV");
+
+			// Sugerimos un nombre de archivo por defecto
+			selectorArchivo.setSelectedFile(new java.io.File("trabajadores.csv"));
+
+			// 2. Abrimos la ventana de "Guardar"
+			int seleccion = selectorArchivo.showSaveDialog(this);
+
+			// 3. Si el usuario hace clic en "Guardar" (Aceptar)
+			if (seleccion == JFileChooser.APPROVE_OPTION) {
+				try {
+					// Obtenemos la ruta absoluta que ha elegido el usuario
+					String rutaElegida = selectorArchivo.getSelectedFile().getAbsolutePath();
+
+					// Forzamos a que termine en .csv si el usuario se olvidó de escribirlo
+					if (!rutaElegida.toLowerCase().endsWith(".csv")) {
+						rutaElegida += ".csv";
+					}
+
+					// Llamamos a tu método del DAO pasándole la ruta elegida
+					AccesoTrabajador.exportarACSV(rutaElegida);
+
+					JOptionPane.showMessageDialog(this, "¡Archivo CSV guardado con éxito!",
+							"Exportación Completada", JOptionPane.INFORMATION_MESSAGE);
+				} catch (BDException ex) {
+					JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+
+		if (e.getSource() == btnExportarJSON) {
+			// 1. Creamos el selector de archivos
+			JFileChooser selectorArchivo = new JFileChooser();
+			selectorArchivo.setDialogTitle("Guardar archivo JSON");
+
+			// Sugerimos un nombre de archivo por defecto
+			selectorArchivo.setSelectedFile(new java.io.File("trabajadores.json"));
+
+			// 2. Abrimos la ventana de "Guardar"
+			int seleccion = selectorArchivo.showSaveDialog(this);
+
+			// 3. Si el usuario hace clic en "Guardar"
+			if (seleccion == JFileChooser.APPROVE_OPTION) {
+				try {
+					// Obtenemos la ruta absoluta elegida
+					String rutaElegida = selectorArchivo.getSelectedFile().getAbsolutePath();
+
+					// Forzamos la extensión .json
+					if (!rutaElegida.toLowerCase().endsWith(".json")) {
+						rutaElegida += ".json";
+					}
+
+					// Llamamos a tu método del DAO con la ruta dinámica
+					AccesoTrabajador.exportarAJSON(rutaElegida);
+
+					JOptionPane.showMessageDialog(this, "¡Archivo JSON guardado con éxito!",
+							"Exportación Completada", JOptionPane.INFORMATION_MESSAGE);
+				} catch (BDException ex) {
+					JOptionPane.showMessageDialog(this, "Error al exportar: " + ex.getMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
