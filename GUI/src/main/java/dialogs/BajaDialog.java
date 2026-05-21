@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dialogs;
 
@@ -12,7 +12,7 @@ import javax.swing.*;
 import modelo.Empresa;
 
 /**
- * 
+ *
  * @author usuario
  *
  */
@@ -71,25 +71,25 @@ public class BajaDialog extends JDialog implements ActionListener {
 			int respuesta = JOptionPane.showConfirmDialog(null, "�Desea dar de baja el trabajador?", "Borrar",
 					JOptionPane.YES_NO_OPTION);
 			switch (respuesta) {
-			case JOptionPane.YES_OPTION:
-				try {
-					// Operaciones en caso afirmativo
-					if (empresa.bajaTrabajador(Integer.parseInt(areaIdentificador.getText()))) {
-						JOptionPane.showMessageDialog(this, "El trabajador se ha eliminado correctamente");
-					} else {
-						JOptionPane.showMessageDialog(null, "El trabajador no se encuentra en la lista", "Error",
+				case JOptionPane.YES_OPTION:
+					try {
+						// Operaciones en caso afirmativo
+						if (empresa.bajaTrabajador(Integer.parseInt(areaIdentificador.getText()))) {
+							JOptionPane.showMessageDialog(this, "El trabajador se ha eliminado correctamente");
+						} else {
+							JOptionPane.showMessageDialog(null, "El trabajador no se encuentra en la lista", "Error",
+									JOptionPane.ERROR_MESSAGE);
+						}
+
+						break;
+					} catch (Exception e1) {
+						JOptionPane.showMessageDialog(null, "El ID debe ser un n�mero entero", "Error",
 								JOptionPane.ERROR_MESSAGE);
 					}
 
+				case JOptionPane.NO_OPTION:
+					// Operaciones en caso negativo
 					break;
-				} catch (Exception e1) {
-					JOptionPane.showMessageDialog(null, "El ID debe ser un n�mero entero", "Error",
-							JOptionPane.ERROR_MESSAGE);
-				}
-
-			case JOptionPane.NO_OPTION:
-				// Operaciones en caso negativo
-				break;
 			}
 		} else if (e.getSource() == cancelar) {
 			dispose();
